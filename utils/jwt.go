@@ -17,9 +17,9 @@ func keyFunc(token *jwt.Token) (interface{}, error) {
 }
 
 // GenToken 生成 access_token 和 refresh_token
-func GenToken(name string) (aToken, rToken string, err error) {
+func GenToken(id string) (aToken, rToken string, err error) {
 	claims := MyClaims{
-		Name: name,
+		ID: id,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(aTokenTime).Unix(),
 			Issuer:    "Food",
@@ -36,7 +36,7 @@ func GenToken(name string) (aToken, rToken string, err error) {
 }
 
 type MyClaims struct {
-	Name string `json:"name"`
+	ID string `json:"id"`
 	jwt.StandardClaims
 }
 
@@ -66,15 +66,15 @@ func NewToken(aToken, rToken string) (newToken, newRToken string, err error) {
 		return "", "", errors.New("invalid access_token")
 	}
 	if claims, ok := token.Claims.(*MyClaims); ok && token.Valid {
-		return GenToken(claims.Name)
+		return GenToken(claims.ID)
 	}
 	return "", "", nil
 }
 
 func ParseSet(c *gin.Context) string {
-	Name, exists := c.Get("Name")
+	ID, exists := c.Get("id")
 	if !exists {
 		return ""
 	}
-	return Name.(string)
+	return ID.(string)
 }

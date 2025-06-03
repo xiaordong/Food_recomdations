@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -64,7 +65,7 @@ func MerchantLogin(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Merchant login failed", "details": err.Error()})
 		return
 	}
-	aToken, rToken, err := utils.GenToken(m.MerchantName)
+	aToken, rToken, err := utils.GenToken(strconv.Itoa(int(m.ID)))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to generate token", "details": err.Error()})
 		return
@@ -92,4 +93,23 @@ func GetMerchant(c *gin.Context) {
 			"store":        m.Stores,
 		},
 	})
+}
+
+func UpdateMerchant(c *gin.Context) {
+	var m model.Merchant
+	if err := c.BindJSON(&m); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body", "details": err.Error()})
+		return
+	}
+	ID, _ := strconv.Atoi(utils.ParseSet(c))
+	m.ID = uint(ID)
+	err := dao.UpdateProfile(c.Request.Context(), m)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to update merchant", "details": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Merchant updated successfully",
+	})
+
 }
