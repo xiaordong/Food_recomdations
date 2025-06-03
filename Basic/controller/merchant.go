@@ -79,5 +79,17 @@ func MerchantLogin(c *gin.Context) {
 }
 
 func GetMerchant(c *gin.Context) {
-
+	m, err := dao.GetProfile(c.Request.Context(), utils.ParseSet(c))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Merchant not found", "details": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"merchant": gin.H{
+			"merchantID":   m.ID,
+			"merchantName": m.MerchantName,
+			"phone":        m.Phone,
+			"store":        m.Stores,
+		},
+	})
 }

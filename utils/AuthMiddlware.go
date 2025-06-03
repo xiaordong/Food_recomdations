@@ -11,7 +11,7 @@ func AuthMiddleware() func(c *gin.Context) {
 			return
 		}
 		if claims, err := ParasToken(aToken); err == nil {
-			c.Set("username", claims.UserName)
+			c.Set("Name", claims.Name)
 			c.Next()
 		} else {
 			c.JSON(401, "failed authorize")

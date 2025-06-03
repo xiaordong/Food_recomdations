@@ -72,9 +72,9 @@ func NewToken(aToken, rToken string) (newToken, newRToken string, err error) {
 }
 
 func ParseSet(c *gin.Context) string {
-	ID, exists := c.Get("ID")
+	Name, exists := c.Get("Name")
 	if !exists {
 		return ""
 	}
-	return ID.(string)
+	return Name.(string)
 }
