@@ -29,17 +29,18 @@ func MerchantCreate(ctx context.Context, m model.Merchant) error {
 	log.Println("Create Merchant Success!")
 	return nil
 }
-func CheckLogin(ctx context.Context, m model.Merchant) error {
+func CheckLogin(ctx context.Context, m model.Merchant) (model.Merchant, error) {
 	inputPass, _ := utils.Crypto(m.Password)
 	if err := DB.WithContext(ctx).Where("merchant_name = ? AND password = ?", m.MerchantName, inputPass).First(&m).Error; err != nil {
 		log.Println("Password is incorrect!")
-		return errors.New("password is incorrect")
+		return m, errors.New("password is incorrect")
 	}
-	return nil
+	fmt.Println(m)
+	return m, nil
 }
 func GetProfile(ctx context.Context, merchantName string) (model.Merchant, error) {
 	var merchant model.Merchant
-	result := DB.WithContext(ctx).Where("merchant_name = ?", merchantName).First(&merchant)
+	result := DB.WithContext(ctx).Where("id = ?", merchantName).First(&merchant)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return model.Merchant{}, fmt.Errorf("merchant not found")
@@ -56,6 +57,7 @@ func UpdateProfile(ctx context.Context, m model.Merchant) error {
 		}
 		return fmt.Errorf("database error: %w", err)
 	}
+	m.Version = existingMerchant.Version
 	if m.MerchantName != existingMerchant.MerchantName {
 		var count int64
 		if err := DB.WithContext(ctx).Model(&model.Merchant{}).
@@ -69,7 +71,7 @@ func UpdateProfile(ctx context.Context, m model.Merchant) error {
 	}
 	if m.Phone != existingMerchant.Phone {
 		var count int64
-		if err := DB.WithContext(ctx).Model(&model.Merchant{}).Where("phone = ?", m.Phone).Count(&count).Error; err != nil {
+		if err := DB.WithContext(ctx).Model(&model.Merchant{}).Where("phone = ? AND id != ?", m.Phone, m.ID).Count(&count).Error; err != nil {
 			return fmt.Errorf("database error: %w", err)
 		}
 		if count > 0 {
@@ -84,26 +86,16 @@ func UpdateProfile(ctx context.Context, m model.Merchant) error {
 		updateFields["phone"] = m.Phone
 	}
 
-	if m.Version > 0 {
-		updateFields["version"] = gorm.Expr("version + 1")
-		result := DB.WithContext(ctx).Model(&model.Merchant{}).
-			Where("id = ? AND version = ?", m.ID, m.Version).
-			Updates(updateFields)
+	updateFields["version"] = gorm.Expr("version + 1")
+	result := DB.WithContext(ctx).Model(&model.Merchant{}).
+		Where("id = ? AND version = ?", m.ID, m.Version).
+		Updates(updateFields)
 
-		if result.Error != nil {
-			return fmt.Errorf("update failed: %w", result.Error)
-		}
-		if result.RowsAffected == 0 {
-			return errors.New("merchant information has been modified, please refresh and try again")
-		}
-		return nil
+	if result.Error != nil {
+		return fmt.Errorf("update failed: %w", result.Error)
 	}
-
-	if err := DB.WithContext(ctx).Model(&model.Merchant{}).
-		Where("id = ?", m.ID).
-		Updates(updateFields).Error; err != nil {
-		return fmt.Errorf("update failed: %w", err)
+	if result.RowsAffected == 0 {
+		return errors.New("merchant information has been modified, please refresh and try again")
 	}
-
 	return nil
 }

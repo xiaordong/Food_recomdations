@@ -61,11 +61,12 @@ func MerchantLogin(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Password is required"})
 		return
 	}
-	if err := dao.CheckLogin(c, m); err != nil {
+	m2, err := dao.CheckLogin(c, m)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Merchant login failed", "details": err.Error()})
 		return
 	}
-	aToken, rToken, err := utils.GenToken(strconv.Itoa(int(m.ID)))
+	aToken, rToken, err := utils.GenToken(strconv.Itoa(int(m2.ID)))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to generate token", "details": err.Error()})
 		return

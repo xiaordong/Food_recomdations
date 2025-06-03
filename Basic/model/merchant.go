@@ -17,7 +17,7 @@ type Merchant struct {
 	Phone        string    `json:"Phone" gorm:"not null;type:varchar(20);uniqueIndex"`
 	CreatedAt    time.Time `gorm:"type:timestamp;default:CURRENT_TIMESTAMP"`
 	UpdatedAt    time.Time `gorm:"type:timestamp;default:CURRENT_TIMESTAMP"`
-	Version      uint      `gorm:"version" json:"version"`
+	Version      uint      `gorm:"version;default:1" json:"version"`
 	Stores       []Store   `gorm:"foreignKey:MerchantID" json:"stores,omitempty"`
 }
 
@@ -60,7 +60,7 @@ type Store struct {
 	CreatedAt   time.Time `json:"createdAt" gorm:"type:timestamp;default:CURRENT_TIMESTAMP"`
 	UpdatedAt   time.Time `json:"updatedAt" gorm:"type:timestamp;default:CURRENT_TIMESTAMP"`
 	AvgRating   float64   `json:"avgRating" gorm:"default:5"`
-	Version     uint      `gorm:"version" json:"version"`
+	Version     uint      `gorm:"version;default:1" json:"version"`
 	Merchant    Merchant  `json:"-"`
 	Dishes      []Dishes  `gorm:"foreignKey:StoreID" json:"dishes,omitempty"`
 }
@@ -102,7 +102,7 @@ type Dishes struct {
 	CreatedAt time.Time       `gorm:"type:timestamp;default:CURRENT_TIMESTAMP"`
 	UpdatedAt time.Time       `gorm:"type:timestamp;default:CURRENT_TIMESTAMP"`
 	AvgRating float64         `gorm:"default:5" json:"avgRating"`
-	Version   uint            `gorm:"version" json:"version"`
+	Version   uint            `gorm:"version;default:1" json:"version"`
 	Store     Store           `gorm:"foreignKey:StoreID" json:"store,omitempty"`
 	Tags      []Tag           `gorm:"many2many:dishes_tags;" json:"tags,omitempty"`
 }
