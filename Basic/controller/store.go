@@ -62,3 +62,32 @@ func AStore(c *gin.Context) {
 		"data":    data,
 	})
 }
+func UpdateStore(c *gin.Context) {
+	MID, _ := strconv.Atoi(utils.ParseSet(c))
+	SID, _ := strconv.Atoi(c.Param("storeId"))
+	var s model.Store
+	if err := c.ShouldBind(&s); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body", "details": err.Error()})
+		return
+	}
+	s.MerchantID = uint(MID)
+	s.ID = uint(SID)
+	if err := dao.UpdateStore(c.Request.Context(), s); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update Store", "details": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Successfully update Store",
+	})
+}
+func DeleteStore(c *gin.Context) {
+	MID, _ := strconv.Atoi(utils.ParseSet(c))
+	SID, _ := strconv.Atoi(c.Param("storeId"))
+	if err := dao.DeleteStore(c.Request.Context(), uint(SID), (uint)(MID)); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete Store", "details": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Successfully delete Store",
+	})
+}
