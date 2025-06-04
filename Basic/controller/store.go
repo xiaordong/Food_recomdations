@@ -49,3 +49,16 @@ func GetStores(c *gin.Context) {
 		"data":    data,
 	})
 }
+func AStore(c *gin.Context) {
+	MID, _ := strconv.Atoi(utils.ParseSet(c))
+	SID, _ := strconv.Atoi(c.Param("storeId"))
+	data, err := dao.SearchStore(c.Request.Context(), uint(SID), (uint)(MID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get Store", "details": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Successfully get Store",
+		"data":    data,
+	})
+}

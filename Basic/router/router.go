@@ -23,7 +23,7 @@ func InitRouter() *gin.Engine {
 		//店铺详情管理
 		store := authMerchant.Group("/store/:storeId")
 		{
-			store.GET("/")
+			store.GET("/", controller.AStore)
 			store.PUT("/")
 			store.DELETE("/")
 			//菜品管理

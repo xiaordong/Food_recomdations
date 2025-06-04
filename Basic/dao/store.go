@@ -65,3 +65,14 @@ func MyStore(ctx context.Context, merchantID uint) ([]model.Store, error) {
 	}
 	return stores, nil
 }
+func SearchStore(ctx context.Context, sid uint, mid uint) (model.Store, error) {
+	var store model.Store
+	result := DB.WithContext(ctx).Where(&model.Store{ID: sid, MerchantID: mid}).First(&store)
+	if result.Error != nil {
+		return model.Store{}, fmt.Errorf("database error: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return model.Store{}, gorm.ErrRecordNotFound
+	}
+	return store, nil
+}
