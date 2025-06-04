@@ -35,6 +35,17 @@ func NewStore(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Store created successfully",
-		"data":    s,
+	})
+}
+func GetStores(c *gin.Context) {
+	ID, _ := strconv.Atoi(utils.ParseSet(c))
+	data, err := dao.MyStore(c.Request.Context(), uint(ID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get Store", "details": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Successfully get Store",
+		"data":    data,
 	})
 }

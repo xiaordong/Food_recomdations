@@ -53,3 +53,15 @@ func CreateStore(ctx context.Context, store model.Store) error {
 	}
 	return nil
 }
+func MyStore(ctx context.Context, merchantID uint) ([]model.Store, error) {
+	var stores []model.Store
+	result := DB.WithContext(ctx).Where(&model.Store{MerchantID: merchantID}).Find(&stores)
+
+	if result.Error != nil {
+		return nil, fmt.Errorf("database error: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+	return stores, nil
+}
