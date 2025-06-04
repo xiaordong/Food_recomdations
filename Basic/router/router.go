@@ -18,7 +18,7 @@ func InitRouter() *gin.Engine {
 		authMerchant.GET("/profile", controller.GetMerchant)
 		authMerchant.PUT("/profile", controller.UpdateMerchant)
 		//店铺管理
-		authMerchant.POST("/stores")
+		authMerchant.POST("/stores", controller.NewStore)
 		authMerchant.GET("/stores")
 		//店铺详情管理
 		store := authMerchant.Group("/store/:storeId")
