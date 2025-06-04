@@ -82,12 +82,6 @@ func (s *Store) BeforeCreate(tx *gorm.DB) error {
 	if count == 0 {
 		return errors.New("关联的商户不存在")
 	}
-	if err := tx.Model(&Store{}).Where("merchant_id = ? AND name = ?", s.MerchantID, s.Name).Count(&count).Error; err != nil {
-		return fmt.Errorf("数据库查询错误: %w", err)
-	}
-	if count > 0 {
-		return errors.New("同一商户下不能有同名门店")
-	}
 	return nil
 }
 

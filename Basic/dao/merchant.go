@@ -38,9 +38,9 @@ func CheckLogin(ctx context.Context, m model.Merchant) (model.Merchant, error) {
 	fmt.Println(m)
 	return m, nil
 }
-func GetProfile(ctx context.Context, merchantName string) (model.Merchant, error) {
+func GetProfile(ctx context.Context, id string) (model.Merchant, error) {
 	var merchant model.Merchant
-	result := DB.WithContext(ctx).Where("id = ?", merchantName).First(&merchant)
+	result := DB.WithContext(ctx).Where("id = ?", id).First(&merchant)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return model.Merchant{}, fmt.Errorf("merchant not found")
