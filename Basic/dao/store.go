@@ -149,3 +149,11 @@ func DeleteStore(ctx context.Context, sid uint, mid uint) error {
 	}
 	return nil
 }
+func Check(ctx context.Context, SID uint, MID uint) bool {
+	if SID == 0 || MID == 0 {
+		return false // 非法参数直接返回false
+	}
+	var count int64
+	err := DB.WithContext(ctx).Model(&model.Store{}).Where("id = ? AND merchant_id = ?", SID, MID).Count(&count).Error
+	return err == nil && count > 0 // 无错误且存在记录时返回true
+}

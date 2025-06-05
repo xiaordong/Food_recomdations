@@ -6,6 +6,7 @@ import (
 	"Food_recommendation/utils"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
 	"net/http"
 	"strconv"
 	"strings"
@@ -89,5 +90,69 @@ func DeleteStore(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Successfully delete Store",
+	})
+}
+func NewDishes(c *gin.Context) {
+	SID, _ := strconv.Atoi(c.Param("storeId"))
+	var d model.Dishes
+	if err := c.BindJSON(&d); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body", "details": err.Error()})
+		return
+	}
+	d.StoreID = uint(SID)
+	if err := dao.CreateDishes(c.Request.Context(), d); err != nil {
+		if strings.Contains(err.Error(), "already exists") {
+			c.JSON(http.StatusConflict, gin.H{"error": "Dishes name already exists"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create Dishes", "details": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Successfully created Dishes",
+	})
+}
+func GetDishes(c *gin.Context) {
+	SID, _ := strconv.Atoi(c.Param("storeId"))
+	MID, _ := strconv.Atoi(utils.ParseSet(c))
+	data, err := dao.GetDishes(c.Request.Context(), uint(SID), uint(MID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get Dishes", "details": err.Error()})
+		return
+	}
+	var response []struct {
+		ID        uint            `json:"id"`
+		StoreID   uint            `json:"storeId"`
+		Name      string          `json:"name"`
+		Price     decimal.Decimal `json:"price"`
+		Desc      string          `json:"desc"`
+		ImageURL  string          `json:"imageUrl"`
+		Available bool            `json:"available"`
+		Version   uint            `json:"version"`
+	}
+	for _, dish := range data {
+		response = append(response, struct {
+			ID        uint            `json:"id"`
+			StoreID   uint            `json:"storeId"`
+			Name      string          `json:"name"`
+			Price     decimal.Decimal `json:"price"`
+			Desc      string          `json:"desc"`
+			ImageURL  string          `json:"imageUrl"`
+			Available bool            `json:"available"`
+			Version   uint            `json:"version"`
+		}{
+			ID:        dish.ID,
+			StoreID:   dish.StoreID,
+			Name:      dish.Name,
+			Price:     dish.Price,
+			Desc:      dish.Desc,
+			ImageURL:  dish.ImageURL,
+			Available: dish.Available,
+			Version:   dish.Version,
+		})
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Successfully get Dishes",
+		"data":    response,
 	})
 }

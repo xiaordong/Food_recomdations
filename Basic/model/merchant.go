@@ -95,6 +95,7 @@ type Dishes struct {
 	Available bool            `gorm:"default:false" json:"available"`
 	CreatedAt time.Time       `gorm:"type:timestamp;default:CURRENT_TIMESTAMP"`
 	UpdatedAt time.Time       `gorm:"type:timestamp;default:CURRENT_TIMESTAMP"`
+	DeletedAt gorm.DeletedAt  `gorm:"index" json:"-"`
 	AvgRating float64         `gorm:"default:5" json:"avgRating"`
 	Version   uint            `gorm:"version;default:1" json:"version"`
 	Store     Store           `gorm:"foreignKey:StoreID" json:"store,omitempty"`

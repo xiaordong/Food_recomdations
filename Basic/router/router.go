@@ -27,20 +27,19 @@ func InitRouter() *gin.Engine {
 			store.PUT("/", controller.UpdateStore)
 			store.DELETE("/", controller.DeleteStore)
 			//菜品管理
-			store.POST("/dishes")
-			store.GET("/dishes")
+			store.POST("/dishes", controller.NewDishes)
+			store.GET("/dishes", controller.GetDishes)
 			//菜品详情管理
 			dish := store.Group("/dishes/:dishId")
 			{
-				dish.GET("/")
-				dish.PUT("/")
-				dish.DELETE("/")
-				dish.PATCH("/description")
+				dish.GET("/", controller.GetADishes)
+				dish.PUT("/", controller.UpdateADishes)
+				dish.DELETE("/", controller.DeleteADishes)
 				//菜品标签管理
-				dish.POST("/tags")
-				dish.GET("/tags")
-				dish.PUT("/tags")
-				dish.DELETE("/tags/:tagId")
+				dish.POST("/tags", controller.AddTags)
+				dish.GET("/tags", controller.GetTags)
+				dish.PUT("/tags", controller.ChooseTags)
+				dish.DELETE("/tags/:tagId", controller.ChooseTags)
 			}
 		}
 	}
