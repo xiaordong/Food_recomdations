@@ -88,7 +88,7 @@ func (s *Store) BeforeCreate(tx *gorm.DB) error {
 type Dishes struct {
 	ID        uint            `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
 	StoreID   uint            `gorm:"not null;index" json:"storeId"`
-	Name      string          `gorm:"not null;type:varchar(32);index:,unique,where:store_id = store_id" json:"name"`
+	Name      string          `gorm:"not null;type:varchar(32)" json:"name"`
 	Price     decimal.Decimal `gorm:"type:decimal(10,2)" json:"price"`
 	Desc      string          `gorm:"type:varchar(255)" json:"desc"`
 	ImageURL  string          `gorm:"type:varchar(255)" json:"imageUrl"`

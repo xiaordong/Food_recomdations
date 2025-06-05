@@ -128,7 +128,6 @@ func GetDishes(c *gin.Context) {
 		Desc      string          `json:"desc"`
 		ImageURL  string          `json:"imageUrl"`
 		Available bool            `json:"available"`
-		Version   uint            `json:"version"`
 	}
 	for _, dish := range data {
 		response = append(response, struct {
@@ -139,7 +138,6 @@ func GetDishes(c *gin.Context) {
 			Desc      string          `json:"desc"`
 			ImageURL  string          `json:"imageUrl"`
 			Available bool            `json:"available"`
-			Version   uint            `json:"version"`
 		}{
 			ID:        dish.ID,
 			StoreID:   dish.StoreID,
@@ -148,7 +146,6 @@ func GetDishes(c *gin.Context) {
 			Desc:      dish.Desc,
 			ImageURL:  dish.ImageURL,
 			Available: dish.Available,
-			Version:   dish.Version,
 		})
 	}
 	c.JSON(http.StatusOK, gin.H{

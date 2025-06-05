@@ -38,7 +38,7 @@ func GetDishes(ctx context.Context, SID uint, MID uint) ([]model.Dishes, error) 
 		return dishes, errors.New("store ID is required")
 	}
 	query := DB.WithContext(ctx).
-		Select("id", "store_id", "name", "price", "desc", "image_url", "available", "version"). // 指定查询字段
+		Select("id", "store_id", "name", "price", "desc", "image_url", "available"). // 指定查询字段
 		Where("store_id = ?", SID)
 	if MID == 0 {
 		query = query.Where("available = true")
@@ -60,10 +60,11 @@ func GetADishes(ctx context.Context, SID uint, DID uint) (model.Dishes, error) {
 		return dish, errors.New("dish ID is required")
 	}
 
-	// 构建查询（仅选择指定字段）
+	// 预加载标签关联数据
 	result := DB.WithContext(ctx).
-		Select("id", "store_id", "name", "price", "desc", "image_url", "available", "version"). // 指定数据库列名
-		Where("id = ? AND store_id = ?", DID, SID).
+		Select("dishes.id", "dishes.store_id", "dishes.name", "dishes.price", "dishes.desc", "dishes.image_url", "dishes.available").
+		Preload("Tags", "name != ''"). // 预加载非空标签
+		Where("dishes.id = ? AND dishes.store_id = ?", DID, SID).
 		First(&dish)
 
 	// 错误处理

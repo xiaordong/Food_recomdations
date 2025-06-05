@@ -68,74 +68,45 @@ func ChooseTag(ctx context.Context, dishID uint, tags []string) error {
 		return errors.New("maximum 3 tags allowed")
 	}
 	tx := DB.WithContext(ctx).Begin()
-	if tx.Error != nil {
-		return fmt.Errorf("begin transaction failed: %w", tx.Error)
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
+	defer tx.Rollback()
 	var tagIDs []uint
 	for _, tagName := range tags {
 		tagName = strings.TrimSpace(tagName)
 		if tagName == "" || len(tagName) > 12 {
-			continue // 跳过空标签或超长标签
+			continue
 		}
-
 		var tag model.Tag
 		if err := tx.Where("name = ?", tagName).First(&tag).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				newTag := model.Tag{
-					Name: tagName,
-				}
+				// 创建新标签（GORM 自动生成 ID）
+				newTag := model.Tag{Name: tagName}
 				if err := tx.Create(&newTag).Error; err != nil {
-					tx.Rollback()
 					return fmt.Errorf("create tag failed: %w", err)
 				}
-				tagIDs = append(tagIDs, newTag.ID)
+				tagIDs = append(tagIDs, newTag.ID) // newTag.ID 已自动填充
 			} else {
-				tx.Rollback()
 				return fmt.Errorf("query tag failed: %w", err)
 			}
 		} else {
-			// 标签已存在，使用现有ID
 			tagIDs = append(tagIDs, tag.ID)
 		}
 	}
-
-	// 清除菜品原有的所有标签关系
-	if err := tx.Model(&model.Dishes{}).Association("Tags").Clear(); err != nil {
-		tx.Rollback()
-		return fmt.Errorf("clear dish tags failed: %w", err)
+	var dish model.Dishes
+	if err := tx.First(&dish, dishID).Error; err != nil {
+		return fmt.Errorf("dish not found: %w", err)
 	}
-
-	// 为菜品设置新的标签关系
+	if err := tx.Model(&dish).Association("Tags").Clear(); err != nil {
+		return fmt.Errorf("clear tags failed: %w", err)
+	}
 	if len(tagIDs) > 0 {
-		var dish model.Dishes
-		if err := tx.First(&dish, dishID).Error; err != nil {
-			tx.Rollback()
-			return fmt.Errorf("find dish failed: %w", err)
-		}
-
-		var tags []model.Tag
-		if err := tx.Find(&tags, tagIDs).Error; err != nil {
-			tx.Rollback()
+		var tagsToAppend []model.Tag
+		if err := tx.Find(&tagsToAppend, tagIDs).Error; err != nil {
 			return fmt.Errorf("find tags failed: %w", err)
 		}
-
-		if err := tx.Model(&dish).Association("Tags").Append(tags); err != nil {
-			tx.Rollback()
-			return fmt.Errorf("append tags to dish failed: %w", err)
+		if err := tx.Model(&dish).Association("Tags").Append(tagsToAppend); err != nil {
+			return fmt.Errorf("append tags failed: %w", err)
 		}
 	}
 
-	// 提交事务
-	if err := tx.Commit().Error; err != nil {
-		tx.Rollback()
-		return fmt.Errorf("commit transaction failed: %w", err)
-	}
-
-	return nil
+	return tx.Commit().Error
 }

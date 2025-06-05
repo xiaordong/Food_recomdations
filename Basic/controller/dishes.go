@@ -16,14 +16,14 @@ func GetADishes(c *gin.Context) {
 	SID, _ := strconv.Atoi(c.Param("storeId"))
 	DID, _ := strconv.Atoi(c.Param("dishId"))
 
-	// 调用DAO层获取数据
+	// 调用DAO层获取包含标签的菜品数据
 	data, err := dao.GetADishes(c.Request.Context(), uint(SID), uint(DID))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get Dishes", "details": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get dish", "details": err.Error()})
 		return
 	}
 
-	// 创建响应结构体，只包含需要返回的字段
+	// 构建响应结构体，包含标签字段
 	response := struct {
 		ID        uint            `json:"id"`
 		StoreID   uint            `json:"storeId"`
@@ -32,7 +32,7 @@ func GetADishes(c *gin.Context) {
 		Desc      string          `json:"desc"`
 		ImageURL  string          `json:"imageUrl"`
 		Available bool            `json:"available"`
-		Version   uint            `json:"version"`
+		Tags      []string        `json:"tags"` // 新增标签字段
 	}{
 		ID:        data.ID,
 		StoreID:   data.StoreID,
@@ -41,12 +41,18 @@ func GetADishes(c *gin.Context) {
 		Desc:      data.Desc,
 		ImageURL:  data.ImageURL,
 		Available: data.Available,
-		Version:   data.Version,
+		Tags: func() []string {
+			var tags []string
+			for _, tag := range data.Tags {
+				tags = append(tags, tag.Name)
+			}
+			return tags
+		}(),
 	}
 
-	// 返回格式化后的响应
+	// 返回响应
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Successfully get Dishes",
+		"message": "Successfully get dish",
 		"data":    response,
 	})
 }
