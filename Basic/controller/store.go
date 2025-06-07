@@ -4,7 +4,6 @@ import (
 	"Food_recommendation/Basic/dao"
 	"Food_recommendation/Basic/model"
 	"Food_recommendation/utils"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"net/http"
@@ -18,14 +17,12 @@ func NewStore(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body", "details": err.Error()})
 		return
 	}
-	fmt.Println(s)
 	if s.Name == "" || s.Description == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body", "details": "lack of Name or Description"})
 		return
 	}
 	ID, _ := strconv.Atoi(utils.ParseSet(c))
 	s.MerchantID = uint(ID)
-	fmt.Println(s)
 	if err := dao.CreateStore(c.Request.Context(), s); err != nil {
 		if strings.Contains(err.Error(), "already exists") {
 			c.JSON(http.StatusConflict, gin.H{"error": "Store name already exists"})
