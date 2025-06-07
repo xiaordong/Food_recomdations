@@ -90,14 +90,59 @@ func DeleteStore(c *gin.Context) {
 	})
 }
 func NewDishes(c *gin.Context) {
-	SID, _ := strconv.Atoi(c.Param("storeId"))
-	var d model.Dishes
-	if err := c.BindJSON(&d); err != nil {
+	// 解析storeId参数
+	SID, err := strconv.Atoi(c.Param("storeId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid store ID", "details": err.Error()})
+		return
+	}
+
+	// 定义DTO接收前端数据
+	type RequestBody struct {
+		Name      string   `json:"name" binding:"required"`
+		Price     string   `json:"price" binding:"required"`
+		Desc      string   `json:"desc"`
+		ImageURL  string   `json:"imageUrl"`
+		Tags      []string `json:"tags"`
+		Available bool     `json:"available"`
+	}
+
+	var req RequestBody
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body", "details": err.Error()})
 		return
 	}
-	d.StoreID = uint(SID)
-	if err := dao.CreateDishes(c.Request.Context(), d); err != nil {
+
+	// 转换价格为decimal.Decimal类型
+	price, err := decimal.NewFromString(req.Price)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid price format", "details": err.Error()})
+		return
+	}
+
+	// 构建完整的Dishes对象
+	dishes := model.Dishes{
+		StoreID:   uint(SID),
+		Name:      req.Name,
+		Price:     price,
+		Desc:      req.Desc,
+		ImageURL:  req.ImageURL,
+		Available: req.Available,
+	}
+
+	// 处理Tags - 将字符串数组转换为Tag对象数组
+	if len(req.Tags) > 0 {
+		tags := make([]model.Tag, len(req.Tags))
+		for i, tagName := range req.Tags {
+			tags[i] = model.Tag{
+				Name: tagName,
+			}
+		}
+		dishes.Tags = tags
+	}
+
+	// 调用DAO层函数创建菜品
+	if err := dao.CreateDishes(c.Request.Context(), dishes); err != nil {
 		if strings.Contains(err.Error(), "already exists") {
 			c.JSON(http.StatusConflict, gin.H{"error": "Dishes name already exists"})
 			return
@@ -105,6 +150,7 @@ func NewDishes(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create Dishes", "details": err.Error()})
 		return
 	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Successfully created Dishes",
 	})

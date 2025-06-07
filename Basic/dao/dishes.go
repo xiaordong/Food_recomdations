@@ -30,8 +30,31 @@ func CreateDishes(ctx context.Context, d model.Dishes) error {
 		tx.Rollback()
 		return fmt.Errorf("transaction commit failed: %w", err)
 	}
+	if d.Tags != nil {
+		var createdDishes model.Dishes
+		if err := DB.Where("name = ? AND store_id = ?", d.Name, d.StoreID).First(&createdDishes).Error; err != nil {
+			return fmt.Errorf("failed to retrieve created dishes: %w", err)
+		}
+		for _, tag := range d.Tags {
+			var existingTag model.Tag
+			if err := DB.Where("name = ?", tag.Name).First(&existingTag).Error; err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					existingTag.Name = tag.Name
+					if err := DB.Create(&existingTag).Error; err != nil {
+						return fmt.Errorf("failed to create tag: %w", err)
+					}
+				} else {
+					return fmt.Errorf("error checking tag existence: %w", err)
+				}
+			}
+			if err := DB.Model(&createdDishes).Association("Tags").Append(&existingTag); err != nil {
+				return fmt.Errorf("failed to associate tag with dishes: %w", err)
+			}
+		}
+	}
 	return nil
 }
+
 func GetDishes(ctx context.Context, SID uint, MID uint) ([]model.Dishes, error) {
 	var dishes []model.Dishes
 	if SID == 0 {

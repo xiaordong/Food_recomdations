@@ -20,7 +20,7 @@ var (
 )
 
 func InitDB() *gorm.DB {
-	dsn := "root:2132047479@tcp(127.0.0.1:3306)/Food?charset=utf8mb4&parseTime=True&loc=Local&timeout=10s"
+	dsn := "root:2132047479@tcp(127.0.0.1:3306)/food?charset=utf8mb4&parseTime=True&loc=Local&timeout=10s"
 
 	// 配置数据库连接池
 	db, err := gorm.Open(mysql.New(mysql.Config{

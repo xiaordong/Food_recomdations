@@ -11,14 +11,14 @@ import (
 )
 
 type Merchant struct {
-	ID           uint      `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
-	MerchantName string    `json:"MerchantName" gorm:"unique;not null;type:varchar(64);index"`
-	Password     string    `json:"Password" gorm:"not null;type:varchar(64)"`
-	Phone        string    `json:"Phone" gorm:"not null;type:varchar(20);uniqueIndex"`
-	CreatedAt    time.Time `gorm:"type:timestamp;default:CURRENT_TIMESTAMP"`
-	UpdatedAt    time.Time `gorm:"type:timestamp;default:CURRENT_TIMESTAMP"`
-	Version      uint      `gorm:"version;default:1" json:"version"`
-	Stores       []Store   `gorm:"foreignKey:MerchantID" json:"stores,omitempty"`
+	ID           uint   `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
+	MerchantName string `json:"MerchantName" gorm:"unique;not null;type:varchar(64);index"`
+	Password     string `json:"Password" gorm:"not null;type:varchar(64)"`
+	Phone        string `json:"Phone" gorm:"not null;type:varchar(20);uniqueIndex"`
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	Version      uint    `gorm:"version;default:1" json:"version"`
+	Stores       []Store `gorm:"foreignKey:MerchantID" json:"stores,omitempty"`
 }
 
 var phoneRegex = regexp.MustCompile(`^1[3-9]\d{9}$`)
@@ -52,17 +52,17 @@ func (m *Merchant) BeforeCreate(tx *gorm.DB) error {
 }
 
 type Store struct {
-	ID          uint      `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
-	MerchantID  uint      `gorm:"not null;index" json:"merchantID"`
-	Name        string    `gorm:"not null;type:varchar(32);index:,unique,where:merchant_id = merchant_id" json:"name"`
-	Description string    `gorm:"type:varchar(255)" json:"description"`
-	Active      bool      `json:"active" gorm:"default:false"`
-	CreatedAt   time.Time `json:"createdAt" gorm:"type:timestamp;default:CURRENT_TIMESTAMP"`
-	UpdatedAt   time.Time `json:"updatedAt" gorm:"type:timestamp;default:CURRENT_TIMESTAMP"`
-	AvgRating   float64   `json:"avgRating" gorm:"default:5"`
-	Version     uint      `gorm:"version;default:1" json:"version"`
-	Merchant    Merchant  `json:"-"`
-	Dishes      []Dishes  `gorm:"foreignKey:StoreID" json:"dishes,omitempty"`
+	ID          uint   `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
+	MerchantID  uint   `gorm:"not null;index" json:"merchantID"`
+	Name        string `gorm:"not null;type:varchar(32);index:,unique,where:merchant_id = merchant_id" json:"name"`
+	Description string `gorm:"type:varchar(255)" json:"description"`
+	Active      bool   `json:"active" gorm:"default:true"`
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	AvgRating   float64  `json:"avgRating" gorm:"default:5"`
+	Version     uint     `gorm:"version;default:1" json:"version"`
+	Merchant    Merchant `json:"-"`
+	Dishes      []Dishes `gorm:"foreignKey:StoreID" json:"dishes,omitempty"`
 }
 
 func (s *Store) BeforeCreate(tx *gorm.DB) error {
@@ -92,14 +92,13 @@ type Dishes struct {
 	Price     decimal.Decimal `gorm:"type:decimal(10,2)" json:"price"`
 	Desc      string          `gorm:"type:varchar(255)" json:"desc"`
 	ImageURL  string          `gorm:"type:varchar(255)" json:"imageUrl"`
-	Available bool            `gorm:"default:false" json:"available"`
-	CreatedAt time.Time       `gorm:"type:timestamp;default:CURRENT_TIMESTAMP"`
-	UpdatedAt time.Time       `gorm:"type:timestamp;default:CURRENT_TIMESTAMP"`
-	DeletedAt gorm.DeletedAt  `gorm:"index" json:"-"`
-	AvgRating float64         `gorm:"default:5" json:"avgRating"`
-	Version   uint            `gorm:"version;default:1" json:"version"`
-	Store     Store           `gorm:"foreignKey:StoreID" json:"store,omitempty"`
-	Tags      []Tag           `gorm:"many2many:dishes_tags;" json:"tags,omitempty"`
+	Available bool            `gorm:"default:true" json:"available"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	AvgRating float64 `gorm:"default:5" json:"avgRating"`
+	Version   uint    `gorm:"version;default:1" json:"version"`
+	Store     Store   `gorm:"foreignKey:StoreID" json:"store,omitempty"`
+	Tags      []Tag   `gorm:"many2many:dishes_tags;" json:"tags,omitempty"`
 }
 
 func (d *Dishes) BeforeCreate(tx *gorm.DB) error {

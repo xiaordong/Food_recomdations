@@ -38,9 +38,7 @@ func CreateStore(ctx context.Context, store model.Store) error {
 		tx.Rollback()
 		return errors.New("store name already exists under this merchant")
 	}
-
 	// 3. 创建店铺记录
-	fmt.Println(store)
 	if err := tx.Create(&store).Error; err != nil {
 		tx.Rollback()
 		return fmt.Errorf("failed to create store: %w", err)
