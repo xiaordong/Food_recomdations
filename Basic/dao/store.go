@@ -63,15 +63,23 @@ func MyStore(ctx context.Context, merchantID uint) ([]model.Store, error) {
 	}
 	return stores, nil
 }
-func SearchStore(ctx context.Context, sid uint, mid uint) (model.Store, error) {
+func SearchStore(ctx context.Context, sid uint) (model.Store, error) {
 	var store model.Store
-	result := DB.WithContext(ctx).Where(&model.Store{ID: sid, MerchantID: mid}).First(&store)
+
+	// 使用链式预加载获取店铺、菜品及其标签
+	result := DB.WithContext(ctx).
+		Preload("Dishes").      // 预加载店铺关联的菜品
+		Preload("Dishes.Tags"). // 预加载每道菜品关联的标签
+		Where(&model.Store{ID: sid}).
+		First(&store)
+
 	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return model.Store{}, result.Error
+		}
 		return model.Store{}, fmt.Errorf("database error: %w", result.Error)
 	}
-	if result.RowsAffected == 0 {
-		return model.Store{}, gorm.ErrRecordNotFound
-	}
+
 	return store, nil
 }
 func UpdateStore(ctx context.Context, store model.Store) error {

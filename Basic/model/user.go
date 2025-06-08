@@ -9,13 +9,13 @@ import (
 )
 
 type User struct {
-	ID        uint      `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
-	Username  string    `gorm:"unique;not null;type:varchar(64);index" json:"username"`
-	Password  string    `json:"Password" gorm:"not null;type:varchar(64)"`
-	Phone     string    `json:"Phone" gorm:"not null;type:varchar(20);uniqueIndex"`
-	CreatedAt time.Time `gorm:"type:timestamp;default:CURRENT_TIMESTAMP"`
-	UpdatedAt time.Time `gorm:"type:timestamp;default:CURRENT_TIMESTAMP"`
-	Searches  []Search  `gorm:"foreignKey:UserID" json:"searches,omitempty"`
+	ID        uint   `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
+	Username  string `gorm:"unique;not null;type:varchar(64);index" json:"username"`
+	Password  string `json:"Password" gorm:"not null;type:varchar(64)"`
+	Phone     string `json:"Phone" gorm:"not null;type:varchar(20);uniqueIndex"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Searches  []Search `gorm:"foreignKey:UserID" json:"searches,omitempty"`
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) error {
@@ -47,11 +47,11 @@ func (u *User) BeforeCreate(tx *gorm.DB) error {
 }
 
 type Search struct {
-	ID        uint      `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
-	UserID    uint      `gorm:"not null;index" json:"userId"`
-	User      User      `gorm:"foreignKey:UserID" json:"-"`
-	Key       string    `gorm:"unique;not null;type:varchar(64);index" json:"key"`
-	CreatedAt time.Time `gorm:"type:timestamp;default:CURRENT_TIMESTAMP"`
+	ID        uint   `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
+	UserID    uint   `gorm:"not null;index" json:"userId"`
+	User      User   `gorm:"foreignKey:UserID" json:"-"`
+	Key       string `gorm:"unique;not null;type:varchar(64);index" json:"key"`
+	CreatedAt time.Time
 }
 
 func (s *Search) BeforeCreate(tx *gorm.DB) error {
@@ -84,14 +84,14 @@ func (s *Search) BeforeCreate(tx *gorm.DB) error {
 }
 
 type History struct {
-	ID        uint      `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
-	UserID    uint      `gorm:"not null;index" json:"userId"`
-	User      User      `gorm:"foreignKey:UserID" json:"-"`
-	StoreID   uint      `gorm:"not null;index" json:"storeId"`
-	Store     Store     `gorm:"foreignKey:StoreID" json:"-"`
-	DishID    uint      `gorm:"not null;index" json:"dishId"`
-	Dish      Dishes    `gorm:"foreignKey:DishID;references:ID" json:"-"`
-	CreatedAt time.Time `gorm:"type:timestamp;default:CURRENT_TIMESTAMP"`
+	ID        uint   `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
+	UserID    uint   `gorm:"not null;index" json:"userId"`
+	User      User   `gorm:"foreignKey:UserID" json:"-"`
+	StoreID   uint   `gorm:"not null;index" json:"storeId"`
+	Store     Store  `gorm:"foreignKey:StoreID" json:"-"`
+	DishID    uint   `gorm:"not null;index" json:"dishId"`
+	Dish      Dishes `gorm:"foreignKey:DishID;references:ID" json:"-"`
+	CreatedAt time.Time
 }
 
 func (h *History) BeforeCreate(tx *gorm.DB) error {
@@ -121,4 +121,15 @@ func (h *History) BeforeCreate(tx *gorm.DB) error {
 		return errors.New("该菜品不属于指定的店铺")
 	}
 	return nil
+}
+
+type ShowMerchant struct {
+	Img        string `json:"img"`        // 菜品图片URL
+	DishesName string `json:"dishesName"` // 菜品名称
+	StoreName  string `json:"storeName"`  // 店铺名称
+	Rating     string `json:"rating"`     // 评分（注意：实际是float64类型，JSON中转为string）
+	Link       string `json:"link"`       // 链接（实际是店铺ID）
+}
+type Statue struct {
+	DishesID uint `gorm:"not null;index" json:"dishesId"`
 }

@@ -48,17 +48,68 @@ func GetStores(c *gin.Context) {
 	})
 }
 func AStore(c *gin.Context) {
-	MID, _ := strconv.Atoi(utils.ParseSet(c))
-	SID, _ := strconv.Atoi(c.Param("storeId"))
-	data, err := dao.SearchStore(c.Request.Context(), uint(SID), (uint)(MID))
+	SID, err := strconv.Atoi(c.Param("storeId"))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get Store", "details": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid store ID"})
 		return
 	}
+
+	store, err := dao.SearchStore(c.Request.Context(), uint(SID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get store",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// 构建精简响应
+	response := gin.H{
+		"id":          store.ID,
+		"name":        store.Name,
+		"description": store.Description,
+		"active":      store.Active,
+		"avgRating":   store.AvgRating,
+		"dishes":      formatDishes(store.Dishes),
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Successfully get Store",
-		"data":    data,
+		"message": "Successfully get store",
+		"data":    response,
 	})
+
+}
+
+// 格式化菜品数据，过滤冗余字段
+func formatDishes(dishes []model.Dishes) []gin.H {
+	result := make([]gin.H, 0, len(dishes))
+
+	for _, dish := range dishes {
+		// 跳过嵌套的空store对象
+		dish.Store = model.Store{}
+
+		// 格式化标签（仅保留名称）
+		tags := make([]string, 0, len(dish.Tags))
+		for _, tag := range dish.Tags {
+			tags = append(tags, tag.Name)
+		}
+
+		// 构建精简的菜品对象
+		formattedDish := gin.H{
+			"id":        dish.ID,
+			"name":      dish.Name,
+			"price":     dish.Price.String(), // 保留原始精度
+			"desc":      dish.Desc,
+			"imageUrl":  dish.ImageURL,
+			"available": dish.Available,
+			"avgRating": dish.AvgRating,
+			"tags":      tags,
+		}
+
+		result = append(result, formattedDish)
+	}
+
+	return result
 }
 func UpdateStore(c *gin.Context) {
 	MID, _ := strconv.Atoi(utils.ParseSet(c))
