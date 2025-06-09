@@ -58,7 +58,8 @@ func InitRouter() *gin.Engine {
 	user.POST("/register", controller.UserRegister)
 	user.POST("/login", controller.UserLogin)
 	user.GET("/search", controller.SearchHandler)
-	user.GET("/stores/:storeId", controller.AStore)
+	user.GET("/recommend", utils.AuthMiddleware())
+	user.GET("/stores/:storeId", utils.AuthMiddleware(), controller.AStore)
 	user.GET("/stores/:storeId/dishes/:dishId", utils.AuthMiddleware(), controller.DishHandler)
 	user.POST("/stores/:storeId/dishes/:dishId/rating", utils.AuthMiddleware())
 	return router

@@ -1,0 +1,7 @@
+syntax = "proto3";
+package RecommendServer;
+option go_package = "./gen;recommend";
+
+message request{
+  string Token =1;
+}
