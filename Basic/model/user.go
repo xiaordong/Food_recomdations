@@ -19,6 +19,7 @@ type User struct {
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) error {
+	u.ID = uint(GenID())
 	if !phoneRegex.MatchString(u.Phone) {
 		return errors.New("手机号格式不正确")
 	}

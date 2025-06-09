@@ -48,6 +48,7 @@ func GetStores(c *gin.Context) {
 	})
 }
 func AStore(c *gin.Context) {
+	uid, _ := strconv.Atoi(utils.ParseSet(c))
 	SID, err := strconv.Atoi(c.Param("storeId"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid store ID"})
@@ -73,7 +74,12 @@ func AStore(c *gin.Context) {
 		"address":     store.Address,
 		"dishes":      formatDishes(store.Dishes),
 	}
-
+	if err = dao.AddHistory(c.Request.Context(), uint(uid), uint(SID)); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to add history",
+		})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Successfully get store",
 		"data":    response,
@@ -223,6 +229,7 @@ func GetDishes(c *gin.Context) {
 		Price     decimal.Decimal `json:"price"`
 		Desc      string          `json:"desc"`
 		ImageURL  string          `json:"imageUrl"`
+		Rating    float64         `json:"rating"`
 		LikeNum   uint            `json:"likeNum"`
 		Available bool            `json:"available"`
 	}
@@ -234,6 +241,7 @@ func GetDishes(c *gin.Context) {
 			Price     decimal.Decimal `json:"price"`
 			Desc      string          `json:"desc"`
 			ImageURL  string          `json:"imageUrl"`
+			Rating    float64         `json:"rating"`
 			LikeNum   uint            `json:"likeNum"`
 			Available bool            `json:"available"`
 		}{
@@ -243,6 +251,7 @@ func GetDishes(c *gin.Context) {
 			Price:     dish.Price,
 			Desc:      dish.Desc,
 			ImageURL:  dish.ImageURL,
+			Rating:    dish.AvgRating,
 			LikeNum:   dish.LikeNum,
 			Available: dish.Available,
 		})

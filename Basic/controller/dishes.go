@@ -32,6 +32,7 @@ func GetADishes(c *gin.Context) {
 		Desc      string          `json:"desc"`
 		ImageURL  string          `json:"imageUrl"`
 		Available bool            `json:"available"`
+		Rating    float64         `json:"rating"`
 		LikeNum   uint            `json:"likeNum"`
 		Tags      []string        `json:"tags"` // 新增标签字段
 	}{
@@ -42,6 +43,7 @@ func GetADishes(c *gin.Context) {
 		Desc:      data.Desc,
 		ImageURL:  data.ImageURL,
 		Available: data.Available,
+		Rating:    data.AvgRating,
 		LikeNum:   data.LikeNum,
 		Tags: func() []string {
 			var tags []string

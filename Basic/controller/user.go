@@ -68,20 +68,17 @@ func UserLogin(c *gin.Context) {
 
 func SearchHandler(c *gin.Context) {
 	keyword := c.Query("key")
-
 	results, err := dao.UserSearch(c.Request.Context(), keyword)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "搜索失败"})
 		return
 	}
-
 	c.JSON(http.StatusOK, gin.H{
 		"results": results,
 		"count":   len(results),
 	})
 }
 func DishHandler(c *gin.Context) {
-	uid, _ := strconv.Atoi(utils.ParseSet(c))
 	DID, _ := strconv.Atoi(c.Param("dishId"))
 	SID, _ := strconv.Atoi(c.Param("storeId"))
 	data, err := dao.GetADishes(c.Request.Context(), uint(SID), uint(DID))
@@ -91,16 +88,16 @@ func DishHandler(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"data": gin.H{
-			"name":   data.Name,
-			"price":  data.Price,
-			"decs":   data.Desc,
-			"img":    data.ImageURL,
-			"tags":   data.Tags,
-			"rating": data.AvgRating,
+			"name":     data.Name,
+			"price":    data.Price,
+			"decs":     data.Desc,
+			"img":      data.ImageURL,
+			"tags":     data.Tags,
+			"rating":   data.AvgRating,
+			"like_num": data.LikeNum,
 		},
 		"message": "success",
 	})
-	dao.AddHistory(c.Request.Context(), uint(uid), uint(SID), uint(DID))
 }
 
 //func Rating(c *gin.Context) {

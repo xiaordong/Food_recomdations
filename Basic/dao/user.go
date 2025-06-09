@@ -54,6 +54,7 @@ func UserSearch(ctx context.Context, keyword string) ([]model.ShowMerchant, erro
 				d.id AS did,
                 d.image_url AS img,
                 d.name AS dishes_name,
+				d.like_num AS likenum,
                 s.name AS store_name,
 				s.address AS store_address,
                 FORMAT(d.avg_rating, 1) AS rating,
@@ -91,6 +92,7 @@ func UserSearch(ctx context.Context, keyword string) ([]model.ShowMerchant, erro
             d.id AS did,
             d.image_url AS img,
             d.name AS dishes_name,
+			d.like_num AS likenum,
             s.name AS store_name,
 			s.address AS store_address,
             FORMAT(d.avg_rating, 1) AS rating,
@@ -123,7 +125,7 @@ func buildOrderCondition(keyword string, keywords []string) string {
 	return orderSQL
 }
 
-func AddHistory(ctx context.Context, uid uint, SID uint, DID uint) error {
+func AddHistory(ctx context.Context, uid uint, SID uint) error {
 	// 创建 History 实例
 	history := model.History{
 		UserID:  uid,

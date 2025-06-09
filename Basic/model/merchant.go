@@ -3,12 +3,28 @@ package model
 import (
 	"errors"
 	"fmt"
+	"github.com/bwmarrin/snowflake"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
+	"log"
 	"regexp"
 	"strings"
 	"time"
 )
+
+var node *snowflake.Node
+
+func init() {
+	var err error
+	node, err = snowflake.NewNode(1) // nodeID 设为 1（需唯一）
+	if err != nil {
+		log.Fatalf("Failed to create snowflake node: %v", err)
+	}
+}
+
+func GenID() snowflake.ID {
+	return node.Generate()
+}
 
 type Merchant struct {
 	ID           uint   `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
@@ -24,6 +40,7 @@ type Merchant struct {
 var phoneRegex = regexp.MustCompile(`^1[3-9]\d{9}$`)
 
 func (m *Merchant) BeforeCreate(tx *gorm.DB) error {
+	m.ID = uint(GenID())
 	if !phoneRegex.MatchString(m.Phone) {
 		return errors.New("手机号格式不正确")
 	}
