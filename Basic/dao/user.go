@@ -51,9 +51,11 @@ func UserSearch(ctx context.Context, keyword string) ([]model.ShowMerchant, erro
 		err := DB.WithContext(ctx).
 			Table("dishes d").
 			Select(`
+				d.id AS did,
                 d.image_url AS img,
                 d.name AS dishes_name,
                 s.name AS store_name,
+				s.address AS store_address,
                 FORMAT(d.avg_rating, 1) AS rating,
                 CONCAT("/store/", s.id) AS link
             `).
@@ -86,9 +88,11 @@ func UserSearch(ctx context.Context, keyword string) ([]model.ShowMerchant, erro
 	err := DB.WithContext(ctx).
 		Table("dishes d").
 		Select(`
+            d.id AS did,
             d.image_url AS img,
             d.name AS dishes_name,
             s.name AS store_name,
+			s.address AS store_address,
             FORMAT(d.avg_rating, 1) AS rating,
             CONCAT("/store/", s.id) AS link
         `).
@@ -124,13 +128,10 @@ func AddHistory(ctx context.Context, uid uint, SID uint, DID uint) error {
 	history := model.History{
 		UserID:  uid,
 		StoreID: SID,
-		DishID:  DID,
 	}
-
 	// 使用上下文关联的 DB 执行插入（可自动处理连接池）
 	if err := DB.WithContext(ctx).Create(&history).Error; err != nil {
 		return fmt.Errorf("failed to add history record: %w", err)
 	}
-
 	return nil
 }

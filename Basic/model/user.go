@@ -84,13 +84,11 @@ func (s *Search) BeforeCreate(tx *gorm.DB) error {
 }
 
 type History struct {
-	ID        uint   `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
-	UserID    uint   `gorm:"not null;index" json:"userId"`
-	User      User   `gorm:"foreignKey:UserID" json:"-"`
-	StoreID   uint   `gorm:"not null;index" json:"storeId"`
-	Store     Store  `gorm:"foreignKey:StoreID" json:"-"`
-	DishID    uint   `gorm:"not null;index" json:"dishId"`
-	Dish      Dishes `gorm:"foreignKey:DishID;references:ID" json:"-"`
+	ID        uint  `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
+	UserID    uint  `gorm:"not null;index" json:"userId"`
+	User      User  `gorm:"foreignKey:UserID" json:"-"`
+	StoreID   uint  `gorm:"not null;index" json:"storeId"`
+	Store     Store `gorm:"foreignKey:StoreID" json:"-"`
 	CreatedAt time.Time
 }
 
@@ -107,18 +105,6 @@ func (h *History) BeforeCreate(tx *gorm.DB) error {
 	}
 	if count == 0 {
 		return errors.New("关联的店铺不存在或未激活")
-	}
-	if err := tx.Model(&Dishes{}).Where("id = ? AND available = true", h.DishID).Count(&count).Error; err != nil {
-		return err
-	}
-	if count == 0 {
-		return errors.New("关联的菜品不存在或不可用")
-	}
-	if err := tx.Model(&Dishes{}).Where("id = ? AND store_id = ?", h.DishID, h.StoreID).Count(&count).Error; err != nil {
-		return err
-	}
-	if count == 0 {
-		return errors.New("该菜品不属于指定的店铺")
 	}
 	return nil
 }
