@@ -195,3 +195,176 @@ func DeleteDishes(ctx context.Context, SID uint, DID uint) error {
 	}
 	return nil
 }
+
+func LikeDish(ctx context.Context, userID, dishID uint, isLike bool) error {
+	tx := DB.WithContext(ctx).Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			return
+		}
+		if err := tx.Commit().Error; err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 定义点赞记录
+	like := model.Like{
+		UserID: userID,
+		DishID: dishID,
+	}
+
+	var err error
+	if isLike {
+		// 检查是否已存在点赞记录
+		result := tx.Model(&model.Like{}).Where("user_id = ? AND dish_id = ?", userID, dishID).First(&like)
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				// 不存在记录，创建新点赞
+				if err = tx.Create(&like).Error; err != nil {
+					return fmt.Errorf("create like failed: %w", err)
+				}
+			} else {
+				// 其他查询错误
+				return fmt.Errorf("query like failed: %w", result.Error)
+			}
+		} else {
+			// 记录已存在，不重复创建
+			return nil
+		}
+	} else {
+		// 取消点赞：删除已存在的点赞记录
+		result := tx.Model(&model.Like{}).Where("user_id = ? AND dish_id = ?", userID, dishID).Delete(&like)
+		if result.Error != nil {
+			return fmt.Errorf("delete like failed: %w", result.Error)
+		}
+		if result.RowsAffected == 0 {
+			// 无记录可删除，视为成功
+			return nil
+		}
+	}
+
+	// 原子更新菜品点赞数，防止负数
+	var delta int
+	if isLike {
+		delta = 1
+	} else {
+		delta = -1
+	}
+
+	// 检查菜品是否存在
+	var dish model.Dishes
+	if err := tx.First(&dish, dishID).Error; err != nil {
+		return fmt.Errorf("dish not found: %w", err)
+	}
+
+	// 更新点赞数，确保不会小于0
+	updateResult := tx.Model(&model.Dishes{}).
+		Where("id = ? AND like_num >= ?", dishID, -delta).
+		Update("like_num", gorm.Expr("like_num + ?", delta))
+
+	if updateResult.Error != nil {
+		return fmt.Errorf("update like num failed: %w", updateResult.Error)
+	}
+	if updateResult.RowsAffected == 0 {
+		// 菜品不存在或点赞数会变为负数
+		return fmt.Errorf("update like num failed: dishID=%d", dishID)
+	}
+
+	return nil
+}
+
+func RateDish(ctx context.Context, userID, dishID uint, score uint, commit string) error {
+	tx := DB.WithContext(ctx).Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		} else if err := tx.Commit().Error; err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 1. 处理用户评分记录
+	var rating model.Rating
+	if err := tx.Where("user_id = ? AND dish_id = ?", userID, dishID).First(&rating).Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return fmt.Errorf("query rating failed: %w", err)
+		}
+		// 新增评分记录
+		rating = model.Rating{UserID: userID, DishID: dishID, Num: score, Comment: commit}
+		if err := tx.Create(&rating).Error; err != nil {
+			return fmt.Errorf("create rating failed: %w", err)
+		}
+	} else {
+		// 更新已有评分记录
+		if err := tx.Model(&rating).Update("num", score).Error; err != nil {
+			return fmt.Errorf("update rating failed: %w", err)
+		}
+	}
+
+	// 2. 重新计算菜品评分（使用 SQL 聚合函数）
+	var result struct {
+		Sum uint `gorm:"column:rating_sum"`
+		Num uint `gorm:"column:rating_num"`
+	}
+	if err := tx.Model(&model.Rating{}).
+		Where("dish_id = ?", dishID).
+		Select("SUM(num) AS rating_sum, COUNT(*) AS rating_num").
+		Scan(&result).Error; err != nil {
+		return fmt.Errorf("calculate rating failed: %w", err)
+	}
+	fmt.Printf("Calculated rating sum: %d, count: %d\n", result.Sum, result.Num)
+
+	// 3. 更新菜品评分字段
+	var avgRating float64
+	if result.Num > 0 {
+		avgRating = float64(result.Sum) / float64(result.Num)
+	} else {
+		avgRating = 0 // 默认评分
+	}
+	if err := tx.Model(&model.Dishes{}).
+		Where("id = ?", dishID).
+		Updates(map[string]interface{}{
+			"rating_sum": result.Sum,
+			"rating_num": result.Num,
+			"avg_rating": avgRating,
+		}).Error; err != nil {
+		return fmt.Errorf("update dish rating failed: %w", err)
+	}
+
+	// 4. 更新店铺评分
+	// 获取菜品所属店铺ID
+	var dish model.Dishes
+	if err := tx.First(&dish, dishID).Error; err != nil {
+		return fmt.Errorf("dish not found: %w", err)
+	}
+
+	// 计算店铺的总评分和评论数
+	var storeResult struct {
+		TotalRatingSum uint `gorm:"column:total_rating_sum"`
+		TotalRatingNum uint `gorm:"column:total_rating_num"`
+	}
+	if err := tx.Model(&model.Dishes{}).
+		Where("store_id = ?", dish.StoreID).
+		Select("SUM(rating_sum) AS total_rating_sum, SUM(rating_num) AS total_rating_num").
+		Scan(&storeResult).Error; err != nil {
+		return fmt.Errorf("calculate store rating failed: %w", err)
+	}
+
+	// 计算店铺平均评分
+	var storeAvgRating float64
+	if storeResult.TotalRatingNum > 0 {
+		storeAvgRating = float64(storeResult.TotalRatingSum) / float64(storeResult.TotalRatingNum)
+	} else {
+		storeAvgRating = 0 // 没有评分时显示0分
+	}
+
+	// 更新店铺评分
+	if err := tx.Model(&model.Store{}).
+		Where("id = ?", dish.StoreID).
+		Update("avg_rating", storeAvgRating).Error; err != nil {
+		return fmt.Errorf("update store rating failed: %w", err)
+	}
+
+	return nil
+}

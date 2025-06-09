@@ -74,6 +74,8 @@ func runAutoMigrate() {
 		&model.Dishes{},
 		&model.Tag{},
 		&model.History{},
+		&model.Rating{},
+		&model.Like{},
 	)
 
 	if err != nil {

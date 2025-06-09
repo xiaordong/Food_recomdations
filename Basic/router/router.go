@@ -61,6 +61,7 @@ func InitRouter() *gin.Engine {
 	user.GET("/recommend", utils.AuthMiddleware(), controller.HandleItemCFRecommend)
 	user.GET("/stores/:storeId", utils.AuthMiddleware(), controller.AStore)
 	user.GET("/stores/:storeId/dishes/:dishId", utils.AuthMiddleware(), controller.DishHandler)
-	user.POST("/stores/:storeId/dishes/:dishId/rating", utils.AuthMiddleware())
+	user.POST("/like", utils.AuthMiddleware(), controller.LikeDishHandler)
+	user.POST("/rating", utils.AuthMiddleware(), controller.RateDishHandler)
 	return router
 }

@@ -117,6 +117,23 @@ type ShowMerchant struct {
 	Rating     string `json:"rating"`     // 评分（注意：实际是float64类型，JSON中转为string）
 	Link       string `json:"link"`       // 链接（实际是店铺ID）
 }
-type Statue struct {
-	DishesID uint `gorm:"not null;index" json:"dishesId"`
+
+type Like struct {
+	ID        uint   `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
+	UserID    uint   `gorm:"not null;index" json:"userId"`
+	User      User   `gorm:"foreignKey:UserID" json:"-"`
+	DishID    uint   `gorm:"not null;index" json:"dishId"`
+	Dishes    Dishes `gorm:"foreignKey:DishID" json:"-"`
+	CreatedAt time.Time
+}
+
+type Rating struct {
+	ID        uint   `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
+	Comment   string `gorm:"type:varchar(128)" json:"comment"`
+	UserID    uint   `gorm:"not null;index" json:"userId"`
+	User      User   `gorm:"foreignKey:UserID" json:"-"`
+	DishID    uint   `gorm:"not null;index" json:"dishId"`
+	Dishes    Dishes `gorm:"foreignKey:DishID" json:"-"`
+	Num       uint   `gorm:"not null" json:"num"`
+	CreatedAt time.Time
 }

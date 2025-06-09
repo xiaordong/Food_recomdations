@@ -4,6 +4,7 @@ import (
 	"Food_recommendation/Basic/dao"
 	"Food_recommendation/Basic/model"
 	"Food_recommendation/utils"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -100,8 +101,46 @@ func DishHandler(c *gin.Context) {
 	})
 }
 
-//func Rating(c *gin.Context) {
-//	uid, _ := strconv.Atoi(utils.ParseSet(c))
-//	DID, _ := strconv.Atoi(c.Param("dishId"))
-//	SID, _ := strconv.Atoi(c.Param("storeId"))
-//}
+//	func Rating(c *gin.Context) {
+//		uid, _ := strconv.Atoi(utils.ParseSet(c))
+//		DID, _ := strconv.Atoi(c.Param("dishId"))
+//		SID, _ := strconv.Atoi(c.Param("storeId"))
+//	}
+func LikeDishHandler(c *gin.Context) {
+	var req struct {
+		DishID uint `json:"dishId"`
+		IsLike bool `json:"isLike"` // true=点赞，false=取消点赞
+	}
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request", "details": err.Error()})
+		return
+	}
+	userID, _ := strconv.Atoi(utils.ParseSet(c))
+	if err := dao.LikeDish(c.Request.Context(), uint(userID), req.DishID, req.IsLike); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Like failed", "details": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Like operation succeeded"})
+}
+func RateDishHandler(c *gin.Context) {
+	var req struct {
+		DishID uint   `json:"dishId" binding:"required"`
+		Score  uint   `json:"score" binding:"required,min=1,max=5"` // 评分范围1-5
+		Commit string `json:"commit"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request", "details": err.Error()})
+		return
+	}
+
+	fmt.Println(req)
+	userID, _ := strconv.Atoi(utils.ParseSet(c))
+
+	if err := dao.RateDish(c.Request.Context(), uint(userID), req.DishID, req.Score, req.Commit); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Rate failed", "details": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Rate submitted successfully", "avgRating": req.Score})
+}
