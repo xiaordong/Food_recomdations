@@ -17,8 +17,8 @@ func NewStore(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body", "details": err.Error()})
 		return
 	}
-	if s.Name == "" || s.Description == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body", "details": "lack of Name or Description"})
+	if s.Name == "" || s.Description == "" || s.Address == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body", "details": "lack key information"})
 		return
 	}
 	ID, _ := strconv.Atoi(utils.ParseSet(c))
@@ -70,6 +70,7 @@ func AStore(c *gin.Context) {
 		"description": store.Description,
 		"active":      store.Active,
 		"avgRating":   store.AvgRating,
+		"address":     store.Address,
 		"dishes":      formatDishes(store.Dishes),
 	}
 
@@ -103,6 +104,7 @@ func formatDishes(dishes []model.Dishes) []gin.H {
 			"imageUrl":  dish.ImageURL,
 			"available": dish.Available,
 			"avgRating": dish.AvgRating,
+			"likeNum":   dish.LikeNum,
 			"tags":      tags,
 		}
 
@@ -221,6 +223,7 @@ func GetDishes(c *gin.Context) {
 		Price     decimal.Decimal `json:"price"`
 		Desc      string          `json:"desc"`
 		ImageURL  string          `json:"imageUrl"`
+		LikeNum   uint            `json:"likeNum"`
 		Available bool            `json:"available"`
 	}
 	for _, dish := range data {
@@ -231,6 +234,7 @@ func GetDishes(c *gin.Context) {
 			Price     decimal.Decimal `json:"price"`
 			Desc      string          `json:"desc"`
 			ImageURL  string          `json:"imageUrl"`
+			LikeNum   uint            `json:"likeNum"`
 			Available bool            `json:"available"`
 		}{
 			ID:        dish.ID,
@@ -239,6 +243,7 @@ func GetDishes(c *gin.Context) {
 			Price:     dish.Price,
 			Desc:      dish.Desc,
 			ImageURL:  dish.ImageURL,
+			LikeNum:   dish.LikeNum,
 			Available: dish.Available,
 		})
 	}

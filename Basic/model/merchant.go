@@ -52,14 +52,15 @@ func (m *Merchant) BeforeCreate(tx *gorm.DB) error {
 }
 
 type Store struct {
-	ID          uint   `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
-	MerchantID  uint   `gorm:"not null;index" json:"merchantID"`
-	Name        string `gorm:"not null;type:varchar(32);index:,unique,where:merchant_id = merchant_id" json:"name"`
-	Description string `gorm:"type:varchar(255)" json:"description"`
-	Active      bool   `json:"active" gorm:"default:true"`
+	ID          uint    `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
+	MerchantID  uint    `gorm:"not null;index" json:"merchantID"`
+	Name        string  `gorm:"not null;type:varchar(32);index:,unique,where:merchant_id = merchant_id" json:"name"`
+	Description string  `gorm:"type:varchar(255)" json:"description"`
+	Active      bool    `json:"active" gorm:"default:true"`
+	AvgRating   float64 `json:"avgRating" gorm:"default:5"`
+	Address     string  `gorm:"type:varchar(64)" json:"address"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
-	AvgRating   float64  `json:"avgRating" gorm:"default:5"`
 	Version     uint     `gorm:"version;default:1" json:"version"`
 	Merchant    Merchant `json:"-"`
 	Dishes      []Dishes `gorm:"foreignKey:StoreID" json:"dishes,omitempty"`
@@ -93,12 +94,13 @@ type Dishes struct {
 	Desc      string          `gorm:"type:varchar(255)" json:"desc"`
 	ImageURL  string          `gorm:"type:varchar(255)" json:"imageUrl"`
 	Available bool            `gorm:"default:true" json:"available"`
+	AvgRating float64         `gorm:"default:5" json:"avgRating"`
+	LikeNum   uint            `gorm:"default:0" json:"likeNum"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	AvgRating float64 `gorm:"default:5" json:"avgRating"`
-	Version   uint    `gorm:"version;default:1" json:"version"`
-	Store     Store   `gorm:"foreignKey:StoreID" json:"store,omitempty"`
-	Tags      []Tag   `gorm:"many2many:dishes_tags;" json:"tags,omitempty"`
+	Version   uint  `gorm:"version;default:1" json:"version"`
+	Store     Store `gorm:"foreignKey:StoreID" json:"store,omitempty"`
+	Tags      []Tag `gorm:"many2many:dishes_tags;" json:"tags,omitempty"`
 }
 
 func (d *Dishes) BeforeCreate(tx *gorm.DB) error {

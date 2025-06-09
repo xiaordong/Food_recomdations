@@ -53,7 +53,7 @@ func CreateStore(ctx context.Context, store model.Store) error {
 }
 func MyStore(ctx context.Context, merchantID uint) ([]model.Store, error) {
 	var stores []model.Store
-	result := DB.WithContext(ctx).Where(&model.Store{MerchantID: merchantID}).Find(&stores)
+	result := DB.WithContext(ctx).Where(&model.Store{MerchantID: merchantID}).Omit("version").Find(&stores)
 
 	if result.Error != nil {
 		return nil, fmt.Errorf("database error: %w", result.Error)
@@ -101,6 +101,9 @@ func UpdateStore(ctx context.Context, store model.Store) error {
 	}
 	if store.Active != originalStore.Active {
 		updateFields["active"] = store.Active
+	}
+	if store.Address != originalStore.Address && store.Address != "" {
+		updateFields["address"] = store.Address
 	}
 	if len(updateFields) == 0 {
 		return nil
