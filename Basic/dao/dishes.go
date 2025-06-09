@@ -7,51 +7,60 @@ import (
 	"fmt"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
+	"strings"
 	"time"
 )
 
-func CreateDishes(ctx context.Context, d model.Dishes) error {
+func CreateDishes(ctx context.Context, dish model.Dishes) error {
 	tx := DB.WithContext(ctx).Begin()
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
+		} else if err := tx.Commit().Error; err != nil {
+			tx.Rollback()
 		}
 	}()
-	if err := tx.Create(&d).Error; err != nil {
-		tx.Rollback()
-		return fmt.Errorf("failed to create dishes: %w", err)
+
+	// 保存原始标签并临时移除关联
+	originalTags := dish.Tags
+	dish.Tags = nil
+
+	// 创建菜品
+	if err := tx.Create(&dish).Error; err != nil {
+		return fmt.Errorf("创建菜品失败: %w", err)
 	}
-	if err := tx.Model(&model.Store{}).Where("id = ?", d.StoreID).
+
+	// 更新店铺时间戳
+	if err := tx.Model(&model.Store{}).Where("id = ?", dish.StoreID).
 		Update("updated_at", time.Now()).Error; err != nil {
-		tx.Rollback()
-		return fmt.Errorf("failed to update store timestamp: %w", err)
+		return fmt.Errorf("更新店铺时间戳失败: %w", err)
 	}
-	if err := tx.Commit().Error; err != nil {
-		tx.Rollback()
-		return fmt.Errorf("transaction commit failed: %w", err)
-	}
-	if d.Tags != nil {
-		var createdDishes model.Dishes
-		if err := DB.Where("name = ? AND store_id = ?", d.Name, d.StoreID).First(&createdDishes).Error; err != nil {
-			return fmt.Errorf("failed to retrieve created dishes: %w", err)
+
+	// 处理标签关联
+	for _, tag := range originalTags {
+		if strings.TrimSpace(tag.Name) == "" {
+			continue
 		}
-		for _, tag := range d.Tags {
-			var existingTag model.Tag
-			if err := DB.Where("name = ?", tag.Name).First(&existingTag).Error; err != nil {
-				if errors.Is(err, gorm.ErrRecordNotFound) {
-					existingTag.Name = tag.Name
-					if err := DB.Create(&existingTag).Error; err != nil {
-						return fmt.Errorf("failed to create tag: %w", err)
-					}
-				} else {
-					return fmt.Errorf("error checking tag existence: %w", err)
+
+		// 查询或创建标签
+		var t model.Tag
+		if err := tx.Where("name = ?", tag.Name).First(&t).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				t = model.Tag{Name: tag.Name}
+				if err := tx.Create(&t).Error; err != nil {
+					return fmt.Errorf("创建标签失败: %w", err)
 				}
-			}
-			if err := DB.Model(&createdDishes).Association("Tags").Append(&existingTag); err != nil {
-				return fmt.Errorf("failed to associate tag with dishes: %w", err)
+			} else {
+				return fmt.Errorf("查询标签失败: %w", err)
 			}
 		}
+
+		if err := tx.Exec("INSERT INTO dishes_tags (dishes_id, tag_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE dishes_id=dishes_id",
+			dish.ID, t.ID).Error; err != nil {
+			return fmt.Errorf("关联标签失败: %w", err)
+		}
 	}
+
 	return nil
 }
 
