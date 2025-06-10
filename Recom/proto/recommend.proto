@@ -6,10 +6,33 @@ message request {
   string Token = 1;
 }
 
-message recommendation {
-  repeated uint64 dish_ids = 1;
+// 菜品推荐请求消息
+message DishRecommendRequest {
+  uint32 UserID = 1;
+  uint32 From = 2;
+  uint32 To = 3;
 }
 
+// 菜品推荐响应消息
+message DishRecommendResponse {
+  repeated DishRecommendation Recommendations = 1;
+}
+
+// 菜品推荐信息
+message DishRecommendation {
+  uint32 DishID = 1;
+  string DishName = 2;
+  uint32 StoreID = 3;
+  string StoreName = 4;
+  string ImageURL = 5;
+  float AvgRating = 6;
+  string Price = 7;
+  string Desc = 8;
+  bool Available = 9;
+}
+
+// 新增：服务定义
 service RecommendService {
-  rpc GetRecommendations (request) returns (recommendation);
+  // 菜品推荐方法
+  rpc DishRecommend(DishRecommendRequest) returns (DishRecommendResponse);
 }

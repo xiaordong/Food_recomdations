@@ -30,6 +30,7 @@ type Merchant struct {
 	ID           uint   `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
 	MerchantName string `json:"MerchantName" gorm:"unique;not null;type:varchar(64);index"`
 	Password     string `json:"Password" gorm:"not null;type:varchar(64)"`
+	Avatar       string `json:"avatar" gorm:"not null;type:varchar(255)"`
 	Phone        string `json:"Phone" gorm:"not null;type:varchar(20);uniqueIndex"`
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
