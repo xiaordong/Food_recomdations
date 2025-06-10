@@ -69,7 +69,17 @@ func UserLogin(c *gin.Context) {
 
 func SearchHandler(c *gin.Context) {
 	keyword := c.Query("key")
-	results, err := dao.UserSearch(c.Request.Context(), keyword)
+	token := c.GetHeader("Authorization")
+	uid := 0
+	if token != "" {
+		claim, err := utils.ParasToken(token)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to login", "details": err.Error()})
+			return
+		}
+		uid, _ = strconv.Atoi(claim.ID)
+	}
+	results, err := dao.UserSearch(c.Request.Context(), keyword, uint(uid))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "搜索失败"})
 		return
@@ -143,4 +153,41 @@ func RateDishHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Rate submitted successfully", "avgRating": req.Score})
+}
+func GetHistory(c *gin.Context) {
+	userID, _ := strconv.Atoi(utils.ParseSet(c))
+	res, err := dao.GetUserHistory(c.Request.Context(), uint(userID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user history", "details": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Successfully get user history",
+		"data":    res,
+	})
+}
+func GetSearchKey(c *gin.Context) {
+	uid, _ := strconv.Atoi(utils.ParseSet(c))
+	res, err := dao.AllSearch(c.Request.Context(), uint(uid))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Successfully",
+		"data":    res,
+	})
+}
+func UserLike(c *gin.Context) {
+	uid, _ := strconv.Atoi(utils.ParseSet(c))
+	res, err := dao.AllLike(c.Request.Context(), uint(uid))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Successfully",
+		"data":    res,
+	})
+
 }

@@ -62,6 +62,9 @@ func InitRouter() *gin.Engine {
 	user.GET("/stores/:storeId", utils.AuthMiddleware(), controller.AStore)
 	user.GET("/stores/:storeId/dishes/:dishId", utils.AuthMiddleware(), controller.DishHandler)
 	user.POST("/like", utils.AuthMiddleware(), controller.LikeDishHandler)
+	user.GET("/history", utils.AuthMiddleware(), controller.GetHistory)
+	user.GET("/search/key", utils.AuthMiddleware(), controller.GetSearchKey)
+	user.GET("/like", utils.AuthMiddleware(), controller.UserLike)
 	user.POST("/rating", utils.AuthMiddleware(), controller.RateDishHandler)
 	return router
 }

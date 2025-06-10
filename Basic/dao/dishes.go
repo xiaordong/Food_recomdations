@@ -368,3 +368,22 @@ func RateDish(ctx context.Context, userID, dishID uint, score uint, commit strin
 
 	return nil
 }
+
+func GetUserHistory(ctx context.Context, userID uint) ([]model.History, error) {
+	var history []model.History
+	result := DB.WithContext(ctx).Where("user_id = ?", userID).Find(&history)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return history, nil
+}
+
+// GetAllDishes 获取所有菜品
+func GetAllDishes(ctx context.Context) ([]model.Dishes, error) {
+	var dishes []model.Dishes
+	result := DB.WithContext(ctx).Find(&dishes)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return dishes, nil
+}

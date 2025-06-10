@@ -42,11 +42,11 @@ func UserLogin(ctx context.Context, u model.User) (model.User, error) {
 // func History(ctx context.Context, u model.User) error {
 //
 // }
-func UserSearch(ctx context.Context, keyword string) ([]model.ShowMerchant, error) {
+func UserSearch(ctx context.Context, keyword string, uid uint) ([]model.ShowMerchant, error) {
 	trimmedKeyword := strings.TrimSpace(keyword)
 
 	// 处理空关键词 - 返回随机20个菜品
-	if trimmedKeyword == "" {
+	if trimmedKeyword == "" || uid == 0 {
 		var results []model.ShowMerchant
 		err := DB.WithContext(ctx).
 			Table("dishes d").
@@ -71,7 +71,10 @@ func UserSearch(ctx context.Context, keyword string) ([]model.ShowMerchant, erro
 
 		return results, nil
 	}
-
+	DB.Model(model.Search{}).Create(&model.Search{
+		UserID: uid,
+		Key:    keyword,
+	})
 	// 关键词不为空 - 执行原有的搜索逻辑
 	keywords := strings.Fields(trimmedKeyword)
 	conditions := make([]string, len(keywords))
@@ -106,7 +109,6 @@ func UserSearch(ctx context.Context, keyword string) ([]model.ShowMerchant, erro
 	if err != nil {
 		return nil, fmt.Errorf("search dishes failed: %w", err)
 	}
-
 	return results, nil
 }
 
@@ -136,4 +138,32 @@ func AddHistory(ctx context.Context, uid uint, SID uint) error {
 		return fmt.Errorf("failed to add history record: %w", err)
 	}
 	return nil
+}
+func AllSearch(ctx context.Context, uid uint) ([]string, error) {
+	var results []string
+	err := DB.Model(model.Search{}).WithContext(ctx).Select("key").Where("user_id = ?", uid).Order("created_at DESC").Limit(20).Find(&results).Error
+	if err != nil {
+		return nil, fmt.Errorf("get search records failed: %w", err)
+	}
+	return results[:20], nil
+}
+func AllLike(ctx context.Context, uid uint) ([]model.Dishes, error) {
+	var results []model.Dishes
+	var dishes []string
+	err := DB.WithContext(ctx).Model(model.Like{}).Select("dish_id").Where("user_id = ?", uid).Order("created_at DESC").Error
+	if err != nil {
+		return nil, fmt.Errorf("get likes records failed: %w", err)
+	}
+	for _, dish := range dishes {
+		var d model.Dishes
+		err = DB.WithContext(ctx).Select("dishes.id", "dishes.store_id", "dishes.name", "dishes.price", "dishes.desc", "dishes.image_url", "dishes.available").
+			Preload("Tags", "name != ''"). // 预加载非空标签
+			Where("dishes.id = ?", dish).
+			First(&dish).Error
+		if err != nil {
+			return nil, fmt.Errorf("get likes records failed: %w", err)
+		}
+		results = append(results, d)
+	}
+	return results, nil
 }
