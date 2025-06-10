@@ -2,19 +2,15 @@ package controller
 
 import (
 	gen "Food_recommendation/Recom/proto/gen"
-	"Food_recommendation/utils"
 	"context"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"log"
-	"strconv"
 	"time"
 )
 
 func HandleItemCFRecommend(c *gin.Context) {
-	id, _ := strconv.Atoi(utils.ParseSet(c))
-	num, _ := strconv.Atoi(c.Param("Num"))
 	// 创建微服务客户端连接
 	conn, err := grpc.Dial(
 		"localhost:50051", // ItemCF服务地址和端口
@@ -32,9 +28,8 @@ func HandleItemCFRecommend(c *gin.Context) {
 	client := gen.NewRecommendServiceClient(conn)
 
 	// 准备请求
-	itemCFReq := &gen.DishRecommendRequest{
-		UserID:             uint32(id),
-		NumRecommendations: uint32(num),
+	itemCFReq := &gen.Request{
+		Token: c.GetHeader("Authorization"),
 	}
 
 	// 设置超时
@@ -42,7 +37,7 @@ func HandleItemCFRecommend(c *gin.Context) {
 	defer cancel()
 
 	// 调用微服务
-	resp, err := client.DishRecommend(ctx, itemCFReq)
+	resp, err := client.GetRecommendations(ctx, itemCFReq)
 	if err != nil {
 		log.Printf("ItemCF recommendation failed: %v", err)
 		c.JSON(500, gin.H{"error": "Recommendation service error"})
@@ -52,6 +47,6 @@ func HandleItemCFRecommend(c *gin.Context) {
 	// 返回成功响应
 	c.JSON(200, gin.H{
 		"status": "success",
-		"data":   resp.Recommendations,
+		"data":   resp.DishIds,
 	})
 }
