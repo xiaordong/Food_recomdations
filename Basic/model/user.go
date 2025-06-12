@@ -13,7 +13,7 @@ type User struct {
 	Username  string `gorm:"unique;not null;type:varchar(64);index" json:"username"`
 	Password  string `json:"Password" gorm:"not null;type:varchar(64)"`
 	Phone     string `json:"Phone" gorm:"not null;type:varchar(20);uniqueIndex"`
-	Avatar    string `json:"Avatar" gorm:"not null;type:varchar(255)"`
+	Avatar    string `json:"Avatar" gorm:"not null;type:varchar(255);default:https://pic.616pic.com/ys_img/00/33/87/E4RE0kQH3V.jpg"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	Searches  []Search `gorm:"foreignKey:UserID" json:"searches,omitempty"`
