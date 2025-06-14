@@ -1,11 +1,12 @@
 package main
 
 import (
+	recommend "Food_recommendation/Recom/ItemCF"
 	gen "Food_recommendation/Recom/proto/gen"
-	recommend "Food_recommendation/Recom/server"
 	"context"
 	"log"
 	"net"
+	"strconv"
 
 	"Food_recommendation/Basic/dao"
 	"Food_recommendation/Basic/model"
@@ -24,7 +25,7 @@ func (s *RecommendServer) DishRecommend(ctx context.Context, req *gen.DishRecomm
 	if err != nil {
 		return nil, err
 	}
-
+	println(req.From, req.To)
 	// 截取需要的推荐数量
 	if len(recommendedDishes) > int(req.To) {
 		recommendedDishes = recommendedDishes[req.From:req.To]
@@ -42,23 +43,20 @@ func (s *RecommendServer) DishRecommend(ctx context.Context, req *gen.DishRecomm
 			return nil, err
 		}
 
-		recommendation := &gen.DishRecommendation{
-			DishID:    uint32(dish.ID),
-			DishName:  dish.Name,
-			StoreID:   uint32(dish.StoreID),
-			StoreName: store.Name,
-			ImageURL:  dish.ImageURL,
-			AvgRating: float32(dish.AvgRating),
-			Price:     dish.Price.String(),
-			Desc:      dish.Desc,
-			Available: dish.Available,
+		merchant := &gen.ShowMerchant{
+			Img:        dish.ImageURL,
+			DishesName: dish.Name,
+			DishesID:   uint32(dish.ID),
+			StoreName:  store.Name,
+			Likenum:    uint32(dish.LikeNum),
+			Rating:     strconv.FormatFloat(dish.AvgRating, 'f', 1, 64),
+			Link:       strconv.FormatUint(uint64(dish.StoreID), 10),
 		}
-		response.Recommendations = append(response.Recommendations, recommendation)
+		response.Recommendations = append(response.Recommendations, merchant)
 	}
 
 	return response, nil
 }
-
 func main() {
 	// 初始化数据库
 	dao.InitDB()
@@ -73,7 +71,7 @@ func main() {
 	// 注册服务
 	gen.RegisterRecommendServiceServer(s, &RecommendServer{})
 
-	log.Println("Starting gRPC server on port 50051...")
+	log.Println("Starting gRPC ItemCF on port 50051...")
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}

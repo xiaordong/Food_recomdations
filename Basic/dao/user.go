@@ -51,7 +51,7 @@ func UserSearch(ctx context.Context, keyword string, uid uint) ([]model.ShowMerc
 		err := DB.WithContext(ctx).
 			Table("dishes d").
 			Select(`
-				d.id AS did,
+				d.id AS dishes_id,
                 d.image_url AS img,
                 d.name AS dishes_name,
 				d.like_num AS likenum,
@@ -92,7 +92,7 @@ func UserSearch(ctx context.Context, keyword string, uid uint) ([]model.ShowMerc
 	err := DB.WithContext(ctx).
 		Table("dishes d").
 		Select(`
-            d.id AS did,
+            d.id AS dishes_id,
             d.image_url AS img,
             d.name AS dishes_name,
 			d.like_num AS likenum,
@@ -141,7 +141,7 @@ func AddHistory(ctx context.Context, uid uint, SID uint) error {
 }
 func AllSearch(ctx context.Context, uid uint) ([]string, error) {
 	var results []string
-	err := DB.Model(model.Search{}).WithContext(ctx).Select("key").Where("user_id = ?", uid).Order("created_at DESC").Limit(20).Find(&results).Error
+	err := DB.Debug().Model(model.Search{}).WithContext(ctx).Select("key").Where("user_id = ?", uid).Order("created_at DESC").Limit(20).Find(&results).Error
 	if err != nil {
 		return nil, fmt.Errorf("get search records failed: %w", err)
 	}
@@ -149,21 +149,37 @@ func AllSearch(ctx context.Context, uid uint) ([]string, error) {
 }
 func AllLike(ctx context.Context, uid uint) ([]model.Dishes, error) {
 	var results []model.Dishes
-	var dishes []string
-	err := DB.WithContext(ctx).Model(model.Like{}).Select("dish_id").Where("user_id = ?", uid).Order("created_at DESC").Error
+	var likes []struct {
+		DishID string `gorm:"column:dish_id"`
+	}
+
+	// 查询用户喜欢的菜品ID
+	err := DB.WithContext(ctx).Model(&model.Like{}).
+		Select("dish_id").
+		Where("user_id = ?", uid).
+		Order("created_at DESC").
+		Find(&likes).Error
 	if err != nil {
 		return nil, fmt.Errorf("get likes records failed: %w", err)
 	}
-	for _, dish := range dishes {
-		var d model.Dishes
-		err = DB.WithContext(ctx).Select("dishes.id", "dishes.store_id", "dishes.name", "dishes.price", "dishes.desc", "dishes.image_url", "dishes.available").
-			Preload("Tags", "name != ''"). // 预加载非空标签
-			Where("dishes.id = ?", dish).
-			First(&dish).Error
-		if err != nil {
-			return nil, fmt.Errorf("get likes records failed: %w", err)
-		}
-		results = append(results, d)
+
+	// 收集所有菜品ID
+	var dishIDs []string
+	for _, like := range likes {
+		dishIDs = append(dishIDs, like.DishID)
 	}
+
+	// 批量查询菜品信息
+	if len(dishIDs) > 0 {
+		err = DB.WithContext(ctx).
+			Select("dishes.id", "dishes.store_id", "dishes.name", "dishes.price", "dishes.desc", "dishes.image_url", "dishes.available").
+			Preload("Tags", "tags.name != ''"). // 预加载非空标签
+			Where("dishes.id IN ?", dishIDs).
+			Find(&results).Error
+		if err != nil {
+			return nil, fmt.Errorf("get dishes failed: %w", err)
+		}
+	}
+
 	return results, nil
 }

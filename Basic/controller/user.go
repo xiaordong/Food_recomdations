@@ -58,12 +58,15 @@ func UserLogin(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to login", "details": err.Error()})
 		return
 	}
+	user.Password = ""
+	user.Phone = user.Phone[:3] + "****" + user.Phone[7:]
 	c.JSON(http.StatusOK, gin.H{
 		"message": "login successfully",
 		"data": gin.H{
 			"aToken": aToken,
 			"rToken": rToken,
 		},
+		"info": user,
 	})
 }
 

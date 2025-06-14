@@ -51,7 +51,6 @@ func HandleItemCFRecommend(c *gin.Context) {
 		c.JSON(500, gin.H{"error": "Recommendation service error"})
 		return
 	}
-
 	// 返回成功响应
 	c.JSON(200, gin.H{
 		"status": "success",

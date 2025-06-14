@@ -2,7 +2,7 @@ syntax = "proto3";
 package RecommendServer;
 option go_package = "./gen;recommend";
 
-message request {
+message Request {
   string Token = 1;
 }
 
@@ -15,23 +15,21 @@ message DishRecommendRequest {
 
 // 菜品推荐响应消息
 message DishRecommendResponse {
-  repeated DishRecommendation Recommendations = 1;
+  repeated ShowMerchant Recommendations = 1;
 }
 
-// 菜品推荐信息
-message DishRecommendation {
-  uint32 DishID = 1;
-  string DishName = 2;
-  uint32 StoreID = 3;
-  string StoreName = 4;
-  string ImageURL = 5;
-  float AvgRating = 6;
-  string Price = 7;
-  string Desc = 8;
-  bool Available = 9;
+// 商户展示信息
+message ShowMerchant {
+  string Img = 1;          // 菜品图片URL
+  string DishesName = 2;   // 菜品名称
+  uint32 DishesID = 3;     // 菜品ID
+  string StoreName = 4;    // 店铺名称
+  uint32 Likenum = 5;      // 点赞数
+  string Rating = 6;       // 评分（注意：实际是float64类型，JSON中转为string）
+  string Link = 7;         // 链接（实际是店铺ID）
 }
 
-// 新增：服务定义
+// 服务定义
 service RecommendService {
   // 菜品推荐方法
   rpc DishRecommend(DishRecommendRequest) returns (DishRecommendResponse);

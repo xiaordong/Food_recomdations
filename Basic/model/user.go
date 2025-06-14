@@ -73,7 +73,7 @@ func (s *Search) BeforeCreate(tx *gorm.DB) error {
 	}
 	if s.ID == 0 {
 		var existingSearch Search
-		if err := tx.Where("key = ?", s.Key).First(&existingSearch).Error; err == nil {
+		if err := tx.Where("`key` = ?", s.Key).First(&existingSearch).Error; err == nil {
 			return errors.New("该搜索关键词已存在")
 		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 			return fmt.Errorf("数据库查询错误: %w", err)
@@ -114,9 +114,11 @@ func (h *History) BeforeCreate(tx *gorm.DB) error {
 type ShowMerchant struct {
 	Img        string `json:"img"`        // 菜品图片URL
 	DishesName string `json:"dishesName"` // 菜品名称
-	StoreName  string `json:"storeName"`  // 店铺名称
-	Rating     string `json:"rating"`     // 评分（注意：实际是float64类型，JSON中转为string）
-	Link       string `json:"link"`       // 链接（实际是店铺ID）
+	DishesID   uint   `json:"dishesID"`
+	StoreName  string `json:"storeName"` // 店铺名称
+	Likenum    uint   `json:"likenum"`
+	Rating     string `json:"rating"` // 评分（注意：实际是float64类型，JSON中转为string）
+	Link       string `json:"link"`   // 链接（实际是店铺ID）
 }
 
 type Like struct {
