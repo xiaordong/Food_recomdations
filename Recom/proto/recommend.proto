@@ -18,19 +18,18 @@ message DishRecommendResponse {
   repeated ShowMerchant Recommendations = 1;
 }
 
-// 商户展示信息
+// 商户展示信息（字段名全部小写开头，严格匹配JSON）
 message ShowMerchant {
-  string Img = 1;          // 菜品图片URL
-  string DishesName = 2;   // 菜品名称
-  uint32 DishesID = 3;     // 菜品ID
-  string StoreName = 4;    // 店铺名称
-  uint32 Likenum = 5;      // 点赞数
-  string Rating = 6;       // 评分（注意：实际是float64类型，JSON中转为string）
-  string Link = 7;         // 链接（实际是店铺ID）
+  string img = 1;          // 菜品图片URL
+  string dishesName = 2;   // 菜品名称
+  uint32 dishesID = 3;     // 菜品ID
+  string storeName = 4;    // 店铺名称
+  uint32 likenum = 5;      // 点赞数
+  string rating = 6;       // 评分
+  string link = 7;         // 链接
 }
 
 // 服务定义
 service RecommendService {
-  // 菜品推荐方法
   rpc DishRecommend(DishRecommendRequest) returns (DishRecommendResponse);
 }

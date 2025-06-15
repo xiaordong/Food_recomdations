@@ -172,7 +172,7 @@ func AllLike(ctx context.Context, uid uint) ([]model.Dishes, error) {
 	// 批量查询菜品信息
 	if len(dishIDs) > 0 {
 		err = DB.WithContext(ctx).
-			Select("dishes.id", "dishes.store_id", "dishes.name", "dishes.price", "dishes.desc", "dishes.image_url", "dishes.available").
+			Select("dishes.id", "dishes.store_id", "dishes.name", "dishes.price", "dishes.desc", "dishes.image_url", "dishes.available", "dishes.like_num", "dishes.avg_rating").
 			Preload("Tags", "tags.name != ''"). // 预加载非空标签
 			Where("dishes.id IN ?", dishIDs).
 			Find(&results).Error

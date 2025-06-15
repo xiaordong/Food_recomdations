@@ -50,7 +50,7 @@ func (s *RecommendServer) DishRecommend(ctx context.Context, req *gen.DishRecomm
 			StoreName:  store.Name,
 			Likenum:    uint32(dish.LikeNum),
 			Rating:     strconv.FormatFloat(dish.AvgRating, 'f', 1, 64),
-			Link:       strconv.FormatUint(uint64(dish.StoreID), 10),
+			Link:       "store/" + strconv.FormatUint(uint64(dish.StoreID), 10),
 		}
 		response.Recommendations = append(response.Recommendations, merchant)
 	}

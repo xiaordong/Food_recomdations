@@ -53,7 +53,7 @@ func HandleItemCFRecommend(c *gin.Context) {
 	}
 	// 返回成功响应
 	c.JSON(200, gin.H{
-		"status": "success",
-		"data":   resp.Recommendations,
+		"results": resp.Recommendations,
+		"count":   len(resp.Recommendations),
 	})
 }
