@@ -6,6 +6,7 @@ import (
 	"Food_recommendation/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -57,6 +58,7 @@ func AStore(c *gin.Context) {
 
 	store, err := dao.SearchStore(c.Request.Context(), uint(SID))
 	if err != nil {
+		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Failed to get store",
 			"details": err.Error(),
@@ -75,6 +77,7 @@ func AStore(c *gin.Context) {
 		"dishes":      formatDishes(store.Dishes),
 	}
 	if err = dao.AddHistory(c.Request.Context(), uint(uid), uint(SID)); err != nil {
+		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to add history",
 		})

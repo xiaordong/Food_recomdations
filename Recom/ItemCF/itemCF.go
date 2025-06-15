@@ -5,6 +5,7 @@ import (
 	"Food_recommendation/Basic/model"
 	"context"
 	"math"
+	"sort"
 	"strings"
 )
 
@@ -63,33 +64,56 @@ func ItemCF(ctx context.Context, userID uint) ([]model.Dishes, error) {
 	}
 
 	// 根据用户历史记录和物品相似度矩阵生成推荐列表
-	recommend := make(map[uint]float64)
+	recon := make(map[uint]float64)
 	for _, dishID := range user[userID] {
-		for relatedDishID, similarity := range item[dishID] {
-			recommend[relatedDishID] += similarity
+		for relate, similar := range item[dishID] {
+			recon[relate] += similar
 		}
 	}
 
 	// 关键词匹配，增加推荐得分
-	keywordWeight := 1.0
+	keyW := 1.0
 	for _, dish := range allDishes {
 		for _, keyword := range allSearch {
 			if strings.Contains(dish.Name, keyword) {
-				recommend[dish.ID] += keywordWeight
+				recon[dish.ID] += keyW
 			}
 		}
 	}
 
 	// 排序并返回推荐结果
-	var recommendedDishes []model.Dishes
-	for dishID, _ := range recommend {
+	type RecommendItem struct {
+		DishID uint
+		Score  float64
+	}
+
+	// 根据推荐得分排序
+	var recommendList []RecommendItem
+	for dishID, score := range recon {
+		recommendList = append(recommendList, RecommendItem{
+			DishID: dishID,
+			Score:  score,
+		})
+	}
+
+	// 按得分从高到低排序
+	sort.Slice(recommendList, func(i, j int) bool {
+		return recommendList[i].Score > recommendList[j].Score
+	})
+
+	// 取Top N推荐结果
+	var res []model.Dishes
+	for i, item := range recommendList {
+		if i >= 100 {
+			break
+		}
 		for _, dish := range allDishes {
-			if uint(dish.ID) == dishID {
-				recommendedDishes = append(recommendedDishes, dish)
+			if uint(dish.ID) == item.DishID {
+				res = append(res, dish)
 				break
 			}
 		}
 	}
 
-	return recommendedDishes, nil
+	return res, nil
 }

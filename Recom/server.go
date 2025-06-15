@@ -4,6 +4,7 @@ import (
 	recommend "Food_recommendation/Recom/ItemCF"
 	gen "Food_recommendation/Recom/proto/gen"
 	"context"
+	"fmt"
 	"log"
 	"net"
 	"strconv"
@@ -25,7 +26,7 @@ func (s *RecommendServer) DishRecommend(ctx context.Context, req *gen.DishRecomm
 	if err != nil {
 		return nil, err
 	}
-	println(req.From, req.To)
+	fmt.Println(req.From, req.To)
 	// 截取需要的推荐数量
 	if len(recommendedDishes) > int(req.To) {
 		recommendedDishes = recommendedDishes[req.From:req.To]
